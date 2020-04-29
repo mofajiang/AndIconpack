@@ -17,8 +17,8 @@
     <string name="new_icons">16</string>
 
     <!-- 作者信息 -->
-    <string name="designer_name">And</string>
-    <string name="designer_message">Author of icons</string>
+    <string name="designer_name">Andrew</string>
+    <string name="designer_message">一名设计摄影爱好者，也是本图标包创作者，希望有更多人喜欢这个作品！</string>
     <string name="mail">hujincan15369@Gmail.com</string>
 
     <!-- 更多信息前往main/java/packageName/AboutFragment.java 修改 -->
@@ -39,7 +39,7 @@
     <!-- 主页 Tabs -->
     <string name="home">Home</string>
     <string name="icons">Icons</string>
-    <string name="icon_adapter">Adaptation</string>
+    <string name="icon_adapter">Request</string>
     <string name="apply">Apply</string>
     <string name="about">About</string>
 
@@ -84,5 +84,9 @@
     <string name="cm_dialog_content">%1$s is part of CyanogenMod (based) roms.\nWould you like to
         install it on your device?
     </string>
+
+    <string name="transition_icon">transition_icon</string>
+
+    <string name="title_activity_dev">Dev_Activity</string>
 
 </resources>

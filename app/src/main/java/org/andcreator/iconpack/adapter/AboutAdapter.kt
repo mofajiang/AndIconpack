@@ -11,18 +11,15 @@ import com.bumptech.glide.Glide
 import org.andcreator.iconpack.R
 import org.andcreator.iconpack.bean.AboutBean
 import org.andcreator.iconpack.view.SplitButtonsLayout
-import de.hdodenhof.circleimageview.CircleImageView
 import android.content.Intent
 import android.net.Uri
-import com.bumptech.glide.request.RequestOptions.bitmapTransform
-import jp.wasabeef.glide.transformations.BlurTransformation
 
 
 class AboutAdapter(private val context: Context,
                    private val credits: ArrayList<AboutBean>) : RecyclerView.Adapter<AboutAdapter.AboutHolder>() {
 
     override fun onCreateViewHolder(p0: ViewGroup, p1: Int): AboutHolder {
-        return AboutHolder(LayoutInflater.from(p0.context).inflate(R.layout.item_detailed_credit, p0, false))
+        return AboutHolder(LayoutInflater.from(p0.context).inflate(R.layout.item_designer, p0, false))
     }
 
     override fun getItemCount(): Int {
@@ -31,14 +28,14 @@ class AboutAdapter(private val context: Context,
 
     override fun onBindViewHolder(p0: AboutHolder, p1: Int) {
         val bean = credits[p1]
-        Glide.with(context)
+        Glide.with(p0.banner)
             .load(bean.banner)
-            .apply(bitmapTransform(BlurTransformation(25)))
+//            .apply(bitmapTransform(BlurTransformation(25)))
             .into(p0.banner)
 
-        Glide.with(context).load(bean.photo).into(p0.photo)
+        Glide.with(p0.photo).load(bean.photo).into(p0.photo)
         p0.title.text = bean.title
-        p0.content.text = bean.context
+        p0.content.text = bean.content
 
         if (bean.buttons.size > 0){
             p0.buttons.setButtonCount(bean.buttons.size)
@@ -49,8 +46,8 @@ class AboutAdapter(private val context: Context,
                     )
                 }
 
-                for ((index,value) in bean.buttons.withIndex()){
-                    p0.buttons.addButton(value,bean.links[index])
+                for ((index, value) in bean.buttons.withIndex()){
+                    p0.buttons.addButton(value, bean.links[index], context)
                 }
             }
         }else{
@@ -80,9 +77,9 @@ class AboutAdapter(private val context: Context,
 
     class AboutHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
         var banner: ImageView = itemView.findViewById(R.id.banner)
-        var photo: CircleImageView = itemView.findViewById(R.id.photo)
-        var title: TextView = itemView.findViewById(R.id.title)
+        var photo: ImageView = itemView.findViewById(R.id.photo)
         var content: TextView = itemView.findViewById(R.id.content)
+        var title: TextView = itemView.findViewById(R.id.title)
         var buttons: SplitButtonsLayout = itemView.findViewById(R.id.buttons)
 
 

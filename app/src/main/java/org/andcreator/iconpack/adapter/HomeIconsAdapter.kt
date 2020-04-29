@@ -9,8 +9,6 @@ import android.widget.ImageView
 import com.bumptech.glide.Glide
 import org.andcreator.iconpack.R
 import org.andcreator.iconpack.bean.AdaptionBean
-import org.andcreator.iconpack.bean.IconsBean
-import org.andcreator.iconpack.view.FastScrollRecyclerView
 
 class HomeIconsAdapter(private val context: Context,
                        private var dataList: ArrayList<AdaptionBean>): RecyclerView.Adapter<HomeIconsAdapter.IconsHolder>() {
@@ -26,7 +24,7 @@ class HomeIconsAdapter(private val context: Context,
     override fun onBindViewHolder(p0: IconsHolder, p1: Int) {
         val bean = dataList[p1]
         val icon = context.resources.getIdentifier(bean.icon,"drawable",context.packageName)
-        Glide.with(context).load(icon).into(p0.icon)
+        Glide.with(p0.icon).load(icon).into(p0.icon)
         p0.icon.setOnClickListener {
             clickListener.onClick(icon ,bean.icon)
         }

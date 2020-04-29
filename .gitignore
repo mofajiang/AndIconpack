@@ -9,3 +9,7 @@
 /build
 /captures
 .externalNativeBuild
+
+# Project exclude paths
+/library/build/
+/library/build/intermediates/javac/debug/classes/

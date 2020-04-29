@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
     android:background="@color/backgroundColor"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fillViewport="true"
@@ -11,7 +12,87 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:animateLayoutChanges="true">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/refresh"
+            android:layout_width="match_parent"
+            android:layout_height="240dp"
+            app:cardElevation="4dp"
+            app:cardMaxElevation="4dp"
+            app:cardCornerRadius="16dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="28dp"
+            android:layout_marginBottom="6dp"
+            android:focusable="true"
+            android:clickable="true"
+            android:foreground="?android:attr/selectableItemBackground">
+
+            <ImageView
+                android:id="@+id/headImg"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                tools:ignore="ContentDescription"/>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <include layout="@layout/search_box" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginStart="26dp"
+                    android:layout_marginEnd="26dp">
+
+                    <ImageView
+                        android:id="@+id/icon1"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_margin="10dp"
+                        android:scaleType="fitCenter"
+                        android:visibility="invisible"/>
+
+                    <ImageView
+                        android:id="@+id/icon2"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_margin="10dp"
+                        android:scaleType="fitCenter"
+                        android:visibility="invisible"/>
+
+                    <ImageView
+                        android:id="@+id/icon3"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_margin="10dp"
+                        android:scaleType="fitCenter"
+                        android:visibility="invisible"/>
+
+                    <ImageView
+                        android:id="@+id/icon4"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_margin="10dp"
+                        android:scaleType="fitCenter"
+                        android:visibility="invisible"/>
+
+                </LinearLayout>
+
+
+            </FrameLayout>
+
+        </androidx.cardview.widget.CardView>
 
         <TextView
             android:id="@+id/title"
@@ -27,24 +108,31 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="6dp"
+            android:layout_gravity="center_horizontal"
             android:orientation="horizontal">
 
-            <RelativeLayout
+            <LinearLayout
                 android:id="@+id/iconsPage"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="4dp"
-                android:background="?attr/colorPrimaryDark"
-                android:foreground="?attr/selectableItemBackground"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:gravity="center_vertical"
+                android:background="@drawable/twotone_corners_button"
+                android:foreground="@drawable/radius_selectable"
                 tools:ignore="UnusedAttribute">
 
                 <ImageView
                     android:id="@+id/iconsIcon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="16dp"
+                    android:layout_marginStart="16dp"
+                    android:tint="@color/colorAccent"
+                    android:padding="14dp"
                     android:src="@drawable/ic_dashboard_black_24dp"/>
 
                 <TextView
@@ -52,44 +140,40 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="2dp"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:text="@string/icons"
-                    android:layout_toEndOf="@+id/iconsIcon"/>
+                    android:textColor="@color/colorAccent"
+                    android:text="@string/icons"/>
 
                 <TextView
                     android:id="@+id/iconNumber"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="13sp"
-                    android:paddingBottom="6dp"
-                    android:paddingTop="2dp"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:layout_below="@+id/iconText"
-                    android:layout_toEndOf="@+id/iconsIcon"
+                    android:padding="2dp"
+                    android:textSize="14sp"
+                    android:layout_marginEnd="26dp"
+                    android:textColor="@color/colorAccent"
                     android:text="0"/>
 
-            </RelativeLayout>
+            </LinearLayout>
 
-            <RelativeLayout
+            <LinearLayout
                 android:id="@+id/newDialog"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="6dp"
-                android:background="?attr/colorPrimaryDark"
-                android:foreground="?attr/selectableItemBackground"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:gravity="center_vertical"
+                android:background="@drawable/corners_button"
+                android:foreground="@drawable/radius_selectable"
                 tools:ignore="UnusedAttribute">
 
                 <ImageView
                     android:id="@+id/newIcon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="16dp"
+                    android:layout_marginStart="16dp"
+                    android:tint="@color/white"
+                    android:padding="14dp"
                     android:src="@drawable/ic_local_florist_black_24dp"/>
 
                 <TextView
@@ -97,140 +181,48 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="2dp"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:text="@string/new_icons_num"
-                    android:layout_toEndOf="@+id/newIcon"/>
+                    android:textColor="@color/white"
+                    android:text="@string/new_icons_num"/>
 
                 <TextView
                     android:id="@+id/newNumber"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="13sp"
-                    android:paddingBottom="6dp"
-                    android:paddingTop="2dp"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:layout_below="@+id/newText"
-                    android:layout_toEndOf="@+id/newIcon"
+                    android:padding="2dp"
+                    android:textSize="14sp"
+                    android:layout_marginEnd="26dp"
+                    android:textColor="@color/white"
                     android:text="0"/>
-
-            </RelativeLayout>
-
-        </LinearLayout>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:id="@+id/card"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:layout_marginStart="6dp"
-            android:layout_marginEnd="4dp"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:foreground="?attr/selectableItemBackground"
-            app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="2dp"
-            app:cardElevation="1dp"
-            app:cardMaxElevation="1dp"
-            android:focusable="true" >
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <ImageView
-                    android:id="@+id/logo"
-                    android:layout_width="120dp"
-                    android:layout_height="match_parent"
-                    android:background="#f5f5f5"
-                    android:scaleType="centerCrop"/>
-
-                <RelativeLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="8dp"
-                    android:padding="16dp" >
-
-                    <TextView
-                        android:id="@+id/idTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="22sp"
-                        android:textColor="@color/black_text"
-                        android:text="为此图标包评分吧"/>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_below="@+id/idTitle"
-                        android:layout_marginTop="8dp"
-                        android:gravity="center_vertical">
-
-                        <ImageView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:src="@drawable/ic_favorite_24dp" />
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_favorite_24dp" />
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_favorite_24dp" />
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_favorite_24dp" />
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_favorite_a_24dp"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:padding="8dp"
-                            android:textColor="@color/text_color"
-                            android:textSize="16sp"
-                            android:text="您的评价很重要"/>
-
-                    </LinearLayout>
-
-                </RelativeLayout>
 
             </LinearLayout>
 
-        </androidx.cardview.widget.CardView>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/whatsNewAdaption"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/black_text"
-            android:textSize="18sp"
+            android:textColor="@color/text_color"
+            android:drawableStart="@drawable/ic_outlined_toys_24px"
+            android:drawablePadding="8dp"
+            android:textSize="17sp"
             android:paddingStart="26dp"
             android:paddingEnd="26dp"
-            android:paddingTop="8dp"
+            android:paddingTop="16dp"
             android:paddingBottom="8dp"
             android:visibility="gone"
             android:text="更新了哪些图标"/>
 
         <LinearLayout
+            android:id="@+id/updateWhatIconsLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp">
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:visibility="gone"
+            android:animateLayoutChanges="true">
 
             <ImageView
                 android:layout_width="0dp"
@@ -242,7 +234,7 @@
                 android:scaleType="fitCenter"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone" />
+                android:visibility="invisible" />
 
             <ImageView
                 android:layout_width="0dp"
@@ -254,7 +246,7 @@
                 android:scaleType="fitCenter"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone" />
+                android:visibility="invisible" />
 
             <ImageView
                 android:layout_width="0dp"
@@ -266,7 +258,7 @@
                 android:scaleType="fitCenter"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone" />
+                android:visibility="invisible" />
 
             <ImageView
                 android:layout_width="0dp"
@@ -278,7 +270,7 @@
                 android:scaleType="fitCenter"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone" />
+                android:visibility="invisible" />
 
             <ImageView
                 android:layout_width="0dp"
@@ -290,19 +282,7 @@
                 android:scaleType="fitCenter"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone" />
-
-            <ImageView
-                android:layout_width="0dp"
-                android:layout_height="58dp"
-                android:layout_weight="1"
-                android:id="@+id/updateWhatIcons6"
-                android:foreground="?attr/selectableItemBackground"
-                android:layout_margin="6dp"
-                android:scaleType="fitCenter"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone" />
+                android:visibility="invisible" />
 
         </LinearLayout>
 
@@ -310,21 +290,27 @@
             android:id="@+id/whatsAdaption"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/black_text"
-            android:textSize="18sp"
+            android:drawableStart="@drawable/ic_outlined_category_24px"
+            android:drawablePadding="8dp"
+            android:textColor="@color/text_color"
+            android:textSize="17sp"
             android:paddingStart="26dp"
             android:paddingEnd="26dp"
-            android:paddingTop="8dp"
+            android:paddingTop="16dp"
             android:paddingBottom="8dp"
             android:visibility="gone"
             android:text="新适配设备上哪些图标"/>
 
         <LinearLayout
+            android:id="@+id/adaptWhatIconsLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp">
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:visibility="gone"
+            android:animateLayoutChanges="true">
 
             <ImageView
                 android:layout_width="0dp"
@@ -336,7 +322,7 @@
                 android:scaleType="fitCenter"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone" />
+                android:visibility="invisible" />
 
             <ImageView
                 android:layout_width="0dp"
@@ -348,7 +334,7 @@
                 android:scaleType="fitCenter"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone" />
+                android:visibility="invisible" />
 
             <ImageView
                 android:layout_width="0dp"
@@ -360,7 +346,7 @@
                 android:scaleType="fitCenter"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone" />
+                android:visibility="invisible" />
 
             <ImageView
                 android:layout_width="0dp"
@@ -372,7 +358,7 @@
                 android:scaleType="fitCenter"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone" />
+                android:visibility="invisible" />
 
             <ImageView
                 android:layout_width="0dp"
@@ -384,110 +370,11 @@
                 android:scaleType="fitCenter"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone" />
-
-            <ImageView
-                android:layout_width="0dp"
-                android:layout_height="58dp"
-                android:layout_weight="1"
-                android:id="@+id/adaptWhatIcons6"
-                android:foreground="?attr/selectableItemBackground"
-                android:layout_margin="6dp"
-                android:scaleType="fitCenter"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone" />
+                android:visibility="invisible" />
 
         </LinearLayout>
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/donate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:clickable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:focusable="true"
-            tools:ignore="UnusedAttribute">
-
-            <ImageView
-                android:id="@+id/imageView"
-                android:layout_width="58dp"
-                android:layout_height="58dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:layout_marginEnd="8dp"
-                android:padding="8dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:src="@drawable/alipay"/>
-
-            <TextView
-                android:id="@+id/textView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="8dp"
-                android:text="为图标包作者提供捐赠"
-                android:textSize="18sp"
-                app:layout_constraintEnd_toStartOf="@+id/imageView2"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toEndOf="@+id/imageView"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/textView2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="2dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginBottom="8dp"
-                android:text="如果您能够捐赠我，我将非常感谢"
-                android:textColor="@color/text_color"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/imageView2"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toEndOf="@+id/imageView"
-                app:layout_constraintTop_toBottomOf="@+id/textView"
-                app:layout_constraintVertical_bias="0.0" />
-
-            <ImageView
-                android:id="@+id/imageView2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:src="@drawable/ic_launch_black_24dp"
-                android:tint="@color/text_color"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <TextView
-            android:id="@+id/openResource"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/primary"
-            android:layout_marginBottom="4dp"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:drawablePadding="9dp"
-            android:drawableEnd="@drawable/ic_launch_black_24dp"
-            android:textSize="16sp"
-            android:padding="16dp"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:text="@string/home_link_string"
-            android:focusable="true" />
+        <include layout="@layout/rate_layout" />
 
     </LinearLayout>
 

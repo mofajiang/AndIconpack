@@ -2,11 +2,19 @@ package org.andcreator.iconpack.view;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+
 import org.andcreator.iconpack.R;
+import org.andcreator.iconpack.util.DisplayUtil;
+import org.andcreator.iconpack.util.Utils;
 
 public class SplitButtonsLayout extends LinearLayout {
 
@@ -14,25 +22,25 @@ public class SplitButtonsLayout extends LinearLayout {
 
     public SplitButtonsLayout(Context context) {
         super(context);
-        init();
+        init(context);
     }
 
     public SplitButtonsLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
+        init(context);
     }
 
     public SplitButtonsLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
+        init(context);
     }
 
-    private void init() {
+    private void init(Context context) {
         setOrientation(HORIZONTAL);
         if (isInEditMode()) {
             mButtonCount = 2;
-            addButton("Website", "https://bubbble.org/");
-            addButton("Github+", "https://github.com/hujincan");
+            addButton(R.drawable.ic_dribbble, "https://bubbble.org/", context);
+            addButton(R.drawable.ic_github, "https://github.com/hujincan", context);
         }
     }
 
@@ -44,17 +52,17 @@ public class SplitButtonsLayout extends LinearLayout {
         setWeightSum(buttonCount);
     }
 
-    public void addButton(String text, String link) {
+    public void addButton(int iconId, String link, Context context) {
         if (getChildCount() == mButtonCount)
             throw new IllegalStateException(mButtonCount + " buttons have already been added.");
-        final Button newButton = (Button) LayoutInflater.from(getContext())
+        final ImageView newButton = (ImageView) LayoutInflater.from(getContext())
                 .inflate(R.layout.item_credits_button, this, false);
         // width can be 0 since weight is used
-        final LinearLayout.LayoutParams lp = new LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1);
-        newButton.setText(text);
+        this.setGravity(Gravity.CENTER_HORIZONTAL);
+//        lp.setMargins(DisplayUtil.dip2px(getContext(), 8f),0,DisplayUtil.dip2px(getContext(), 8f),0);
+        Glide.with(newButton).load(iconId).into(newButton);
         newButton.setTag(link);
-        addView(newButton, lp);
+        addView(newButton);
     }
 
     public boolean hasAllButtons() {

@@ -25,7 +25,7 @@ class ImageDialog : AppCompatActivity() {
     private fun initView(){
         val image = intent.getIntExtra("icon",R.mipmap.ic_launcher)
         val iconName = intent.getStringExtra("name")
-        Glide.with(this).load(image).into(icon)
+        Glide.with(icon).load(image).into(icon)
         name.text = iconName
 
         close.setOnClickListener {

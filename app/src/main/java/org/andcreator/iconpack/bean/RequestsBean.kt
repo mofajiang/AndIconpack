@@ -6,7 +6,4 @@ data class RequestsBean(
     val icon: Drawable?,
     val name: String?,
     val pagName: String?,
-    val activityName: String?,
-    val notAdaptation: Int,
-    val adaptation: Int,
-    val type: Int)
+    val activityName: String?)

@@ -1,21 +1,32 @@
 package org.andcreator.iconpack.fragment
 
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import com.bumptech.glide.Glide
 
 import org.andcreator.iconpack.R
-import org.andcreator.iconpack.adapter.AboutAdapter
-import org.andcreator.iconpack.bean.AboutBean
-import kotlinx.android.synthetic.main.fragment_about.*
+import kotlinx.android.synthetic.main.item_designer.*
+import org.andcreator.iconpack.util.AppAdaptationHelper
 import org.andcreator.iconpack.util.doAsyncTask
 import org.andcreator.iconpack.util.onUI
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
+import java.net.URISyntaxException
+import kotlin.math.roundToInt
 
 
 /**
@@ -24,8 +35,20 @@ import org.jetbrains.anko.uiThread
  */
 class AboutFragment : BaseFragment() {
 
-    private val credits = ArrayList<AboutBean>()
-    private lateinit var adapter: AboutAdapter
+    private val buttonsText = arrayListOf(R.drawable.ic_github, R.drawable.ic_dribbble, R.drawable.ic_coolapk)
+    private val links = arrayListOf("https://github.com/hujincan", "https://dribbble.com/hawvuking", "http://www.coolapk.com/u/620606")
+    var isDark = false
+
+    private var progressInt = 0
+
+    companion object{
+        private const val ALIPAY_PACKAGE_NAME = "com.eg.android.AlipayGphone"
+
+        private const val INTENT_URL_FORMAT = "intent://platformapi/startapp?saId=10000007&" +
+                "clientVersion=3.7.0.0718&qrcode=https%3A%2F%2Fqr.alipay.com%2F{payCode}%3F_s" +
+                "%3Dweb-other&_t=1472443966571#Intent;" +
+                "scheme=alipayqr;package=com.eg.android.AlipayGphone;end"
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,33 +64,184 @@ class AboutFragment : BaseFragment() {
     }
 
     private fun initView(){
-        recyclerAbout.layoutManager = LinearLayoutManager(context!!)
-        adapter = AboutAdapter(context!!,credits)
-        recyclerAbout.adapter = adapter
+
+        reward.shrink()
+
+        AppAdaptationHelper.setContext(context!!).getAdaptionCount {
+            adaptationCount.text = "$it"
+            if (progressInt == 0) {
+                progressInt = it
+            } else {
+                progress.max = progressInt
+                progress.progress = it
+                val spannableString = SpannableString("感谢支持本作品，适配率 ${(it.toFloat() / progressInt.toFloat() * 100F).roundToInt()}%")
+                spannableString.setSpan(ForegroundColorSpan(ContextCompat.getColor(context!!, R.color.colorAccent)), spannableString.indexOf("率") + 1, spannableString.length, Spanned.SPAN_EXCLUSIVE_INCLUSIVE)
+                percent.text = spannableString
+            }
+        }.getAppCount {
+            appCount.text = "$it"
+            if (progressInt == 0) {
+                progressInt = it
+            } else {
+                progress.max = it
+                progress.progress = progressInt
+
+                val spannableString = SpannableString("感谢支持本作品，适配率 ${(progressInt.toFloat() / it.toFloat() * 100F).roundToInt()}%")
+                spannableString.setSpan(ForegroundColorSpan(ContextCompat.getColor(context!!, R.color.colorAccent)), spannableString.indexOf("率") + 1, spannableString.length, Spanned.SPAN_EXCLUSIVE_INCLUSIVE)
+                percent.text = spannableString
+            }
+        }
+
+        reward.setOnClickListener {
+            if (reward.isExtended) {
+                if (startIntentUrl(INTENT_URL_FORMAT.replace("{payCode}", resources.getString(R.string.alipay_code)))) {
+                    Toast.makeText(context!!, "非常感谢您给予的动力支持!", Toast.LENGTH_SHORT).show()
+                } else {
+                    reward.shrink()
+                }
+            } else {
+                reward.extend()
+            }
+        }
+
+        root.setOnClickListener {
+            if (reward.isExtended) reward.shrink()
+        }
 
         doAsyncTask {
-            loadData()
-            if (isDestroyed){
-                onUI {
-                    if (loading.visibility == View.VISIBLE){
-                        loading.visibility = View.GONE
+
+            isDark = getBright(Bitmap.createScaledBitmap(drawableToBitmap(R.drawable.banner_background), 500, 300, false)) > 220
+            onUI {
+//                callbacks.callback(isDark)
+                if (isDark){
+                    title.setTextColor(ContextCompat.getColor(context!!, R.color.dark))
+                    content.setTextColor(ContextCompat.getColor(context!!, R.color.dark))
+                }else{
+                    title.setTextColor(ContextCompat.getColor(context!!, R.color.white))
+                    content.setTextColor(ContextCompat.getColor(context!!, R.color.white))
+                }
+            }
+        }
+
+        Glide.with(banner)
+            .load(R.drawable.banner_background)
+//            .apply(bitmapTransform(BlurTransformation(25)))
+            .into(banner)
+
+        Glide.with(photo).load(R.drawable.author_and).into(photo)
+        content.text = resources.getString(R.string.designer_message)
+
+        if (buttonsText.size > 0){
+            buttons.setButtonCount(buttonsText.size)
+            if (!buttons.hasAllButtons()){
+                if (buttonsText.size != links.size){
+                    throw IllegalStateException(
+                        "Button names and button links must have the same number of items" + "."
+                    )
+                }
+
+                for ((index, value) in buttonsText.withIndex()){
+                    buttons.addButton(value, links[index], context)
+                }
+            }
+        }else{
+            buttons.visibility = View.GONE
+        }
+        for (i in 0..buttons.childCount){
+            if ( buttons.getChildAt(i) !=null){
+                buttons.getChildAt(i).setOnClickListener { v ->
+                    if (v!!.tag is String) {
+                        try {
+                            startHttp(v.tag.toString())
+                        } catch (e: Exception) {
+                        }
+
                     }
-                    adapter.notifyDataSetChanged()
                 }
             }
         }
     }
 
-    private fun loadData(){
-        credits.clear()
-        credits.add(AboutBean(resources.getString(R.string.designer_name),resources.getString(R.string.designer_message),
-            R.drawable.author_create,R.drawable.logo_background,
-            arrayListOf("Google+","Dribbble","Coolapk"),
-            arrayListOf("http://bubbble.org","http://bubbble.org","http://bubbble.org")))
-
-        credits.add(AboutBean("And",resources.getString(R.string.developer),
-            R.drawable.author_and,R.drawable.material_background,
-            arrayListOf("Github","Dribbble","Coolapk"),
-            arrayListOf("https://github.com/hujincan","https://dribbble.com/hawvuking","http://www.coolapk.com/u/620606")))
+    //打开链接
+    private fun startHttp(uri: String) {
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.data = Uri.parse(uri)
+        context!!.startActivity(intent)
     }
+
+    private fun getBright(bm: Bitmap): Int {
+        val width = bm.width
+        val height = bm.height
+        var r: Int
+        var g: Int
+        var b: Int
+        var count = 0
+        var bright = 0
+        for (i: Int in 0 until width) {
+            for (j: Int in 0 until height) {
+                count++
+                val localTemp = bm.getPixel(i, j)
+                r = localTemp.or(0xff00ffff.toInt()).shr(8).and(0x00ff)
+                g = localTemp.or(0xffff00ff.toInt()).shr(8).and(0x0000ff)
+                b = localTemp.or(0xffffff00.toInt()).and(0x0000ff)
+                bright = (bright + 0.299 * r + 0.587 * g + 0.114 * b).toInt()
+            }
+        }
+        return bright/count
+    }
+
+    private fun drawableToBitmap(id: Int): Bitmap {
+        return BitmapFactory. decodeResource (resources, id)
+    }
+
+    interface Callbacks {
+        fun callback(isDark: Boolean)
+    }
+
+    private lateinit var callbacks: Callbacks
+
+    fun setCallbackListener(callbacks: Callbacks) {
+        this.callbacks = callbacks
+    }
+
+    private fun startIntentUrl(intentFullUrl: String): Boolean {
+
+        if (hasInstalledAlipayClient(context!!)){
+            return try {
+                val intent = Intent.parseUri(
+                    intentFullUrl,
+                    Intent.URI_INTENT_SCHEME
+                )
+                startActivity(intent)
+                true
+            } catch (e: URISyntaxException) {
+                e.printStackTrace()
+                false
+            } catch (e: ActivityNotFoundException) {
+                e.printStackTrace()
+                false
+            }
+        }else{
+            Toast.makeText(context, "未安装支付宝", Toast.LENGTH_SHORT).show()
+        }
+
+        return false
+    }
+
+    /**
+     * 判断支付宝客户端是否已安装，建议调用转账前检查
+     * @param context Context
+     * @return 支付宝客户端是否已安装
+     */
+    private fun hasInstalledAlipayClient(context: Context): Boolean{
+        val pm = context.packageManager
+        return try {
+            val info = pm.getPackageInfo(ALIPAY_PACKAGE_NAME, 0)
+            info != null
+        } catch (e: PackageManager.NameNotFoundException ) {
+            e.printStackTrace()
+            false
+        }
+    }
+
 }

@@ -4,9 +4,8 @@
     <dimen name="card_little_margin">6dp</dimen>
     <dimen name="cards_spacing">12dp</dimen>
 
-
-    <dimen name="fastscroll_popup_default_padding">24dp</dimen>
-    <dimen name="fastscroll_popup_text_size">36dp</dimen>
+    <dimen name="fastscroll_popup_default_padding">30dp</dimen>
+    <dimen name="fastscroll_popup_text_size">28dp</dimen>
     <dimen name="fastscroll_thumb_min_width">6dp</dimen>
     <dimen name="fastscroll_thumb_max_width">8dp</dimen>
     <dimen name="fastscroll_thumb_height">72dp</dimen>

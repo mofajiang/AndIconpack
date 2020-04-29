@@ -21,21 +21,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.fragment_icons.*
+import kotlinx.android.synthetic.main.fragment_home.view.*
 import org.andcreator.iconpack.R
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
 
 import org.andcreator.iconpack.adapter.RequestsAdapter
 import org.andcreator.iconpack.bean.RequestsBean
 import kotlinx.android.synthetic.main.fragment_request.*
 import kotlinx.android.synthetic.main.fragment_request.loading
 import org.andcreator.iconpack.bean.AdaptionBean
-import org.andcreator.iconpack.util.Utils
-import org.andcreator.iconpack.util.doAsyncTask
-import org.andcreator.iconpack.util.onUI
+import org.andcreator.iconpack.util.*
 import org.jetbrains.anko.displayMetrics
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
@@ -58,24 +52,28 @@ class RequestFragment : BaseFragment() {
     /**
      * 未适配列表
      */
-    private var appsList: ArrayList<RequestsBean> = ArrayList()
+    private lateinit var appsList: ArrayList<RequestsBean>
+
     /**
      * 选中列表
      */
     private var checked: ArrayList<Boolean> = ArrayList()
+
     /**
-     * 已适配列表
+     * 列表适配器
      */
-    private var adaptations: ArrayList<AdaptionBean> = ArrayList()
     private lateinit var adapter: RequestsAdapter
+
+    /**
+     * 反馈文本信息
+     */
     private val message = StringBuilder()
 
     private val myFilesName = ArrayList<String>()
+
     private val myFiles = ArrayList<File>()
 
     private lateinit var fileZip: File
-
-    private var waysAdaptions = 0
 
     private lateinit var thread: Thread
 
@@ -92,9 +90,8 @@ class RequestFragment : BaseFragment() {
                 }
                 3 ->{
                     sendEmail(fileZip)
-
+                    Toast.makeText(context, "选择邮箱会自动填充作者邮箱地址", Toast.LENGTH_SHORT).show()
                     zipLoad.visibility = View.GONE
-
                 }
             }
         }
@@ -110,34 +107,50 @@ class RequestFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        view.setPadding(0, Utils.getStatusBarHeight(context!!), 0, 0)
         initView()
     }
 
     private fun initView(){
         recyclerApps.layoutManager = LinearLayoutManager(context!!)
-        adapter = RequestsAdapter(context!!, appsList, checked)
 
-        recyclerApps.adapter = adapter
-
-        recyclerApps.addOnScrollListener(object : HideScrollListener() {
-
-        })
-
-        doAsyncTask {
-            parser()
-            loadData()
+        AppAdaptationHelper.setContext(context!!).getResolveInfo {
+            appsList = it
             if (isDestroyed){
-                onUI {
-                    if (loading.visibility == View.VISIBLE){
-                        loading.visibility = View.GONE
-                    }
-                    adapter.notifyDataSetChanged()
+                if (loading.visibility == View.VISIBLE){
+                    loading.visibility = View.GONE
                 }
+                notAdaptation.text = getString(R.string.not_adapter) + appsList.size
             }
+            checked.clear()
+            for (value in appsList) {
+                checked.add(false)
+            }
+            adapter = RequestsAdapter(context!!, appsList, checked)
+            recyclerApps.adapter = adapter
+            recyclerApps.addOnScrollListener(object : HideScrollListener() {})
+
+            adapter.setOnSelectListener(object : RequestsAdapter.OnSelectListener {
+                override fun onSelected(size: Int) {
+                    sendRequest.text = "已选择 $size"
+                }
+            })
+
+        }.getAdaptionCountForRequest {
+            adaptation.text = getString(R.string.adapter) + it
+
+        }
+
+        selectAll.setOnClickListener {
+            adapter.selectAll()
+        }
+
+        sendRequest.setOnClickListener {
+            send()
         }
     }
 
-    fun send() {
+    private fun send() {
         val s = getMessage()
 
         if (s.isNotEmpty()){
@@ -181,7 +194,7 @@ class RequestFragment : BaseFragment() {
                         myFiles.add(file)
                         for ((index,value) in adapter.getSelect().withIndex()){
                             if (value){
-                                saveIcon(appsList[index+1].icon!!, appsList[index+1].name?.toLowerCase()?.replace(" ", "_")!!)
+                                saveIcon(appsList[index].icon!!, appsList[index].name?.toLowerCase()?.replace(" ", "_")!!)
 
                                 val msg = Message()
                                 msg.what = 1
@@ -255,79 +268,6 @@ class RequestFragment : BaseFragment() {
         startActivity(Intent.createChooser(intent, "请选择邮件类应用"))
     }
 
-    private fun loadData(){
-        appsList.clear()
-        message.clear()
-        waysAdaptions = 0
-        val pm = context!!.packageManager
-        val mainIntent = Intent(Intent.ACTION_MAIN,null)
-        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER)
-        val resolveInfos = pm.queryIntentActivities(mainIntent,0)
-        // 调用系统排序 ， 根据name排序
-        // 该排序很重要，否则只能显示系统应用，而不能列出第三方应用程序
-        Collections.sort(resolveInfos, ResolveInfo.DisplayNameComparator(pm))
-        for (reInfo: ResolveInfo in resolveInfos){
-            var isHave = false
-            val pkgName = reInfo.activityInfo.packageName // 获得应用程序的包名
-            for (adaptionBean: AdaptionBean in adaptations){
-                if (adaptionBean.pagName == pkgName && reInfo.activityInfo.name == adaptionBean.activityName){
-                    waysAdaptions++
-                    isHave = true
-                    //包名和activity名一样才算适配
-                    break
-                }
-            }
-            if (isHave){
-                continue
-            }
-
-            val activityName = reInfo.activityInfo.name // 获得该应用程序的启动Activity的name
-            val appLabel = reInfo.loadLabel(pm) as String // 获得应用程序的Label
-            val icon = reInfo.loadIcon(pm) // 获得应用程序图标
-            // 为应用程序的启动Activity 准备Intent
-            val launchIntent = Intent()
-            launchIntent.component = ComponentName(
-                pkgName,
-                activityName
-            )
-            // 创建一个AppInfo对象，并赋值
-            appsList.add(RequestsBean(icon,appLabel,pkgName,activityName,appsList.size,waysAdaptions, 0)) // 添加至列表中
-
-            checked.add(false)
-        }
-
-        appsList.add(0, RequestsBean(null," ",null,null,appsList.size,waysAdaptions,1))
-        Log.e("不可能是：",waysAdaptions.toString())
-
-    }
-
-    private fun parser(){
-        val xml = context!!.resources.getXml(R.xml.appfilter)
-        var type = xml.eventType
-        try {
-            while (type != XmlPullParser.END_DOCUMENT){
-                when(type){
-                    XmlPullParser.START_TAG ->{
-                        if (xml.name == "item"){
-                            val pkgActivity = xml.getAttributeValue(0)
-                            if (pkgActivity.indexOf("{")+1 < pkgActivity.indexOf("/") && pkgActivity.indexOf("/")+1 < pkgActivity.indexOf("}")){
-                                adaptations.add(AdaptionBean(pkgActivity.substring(pkgActivity.indexOf("{")+1,pkgActivity.indexOf("/")), pkgActivity.substring(pkgActivity.indexOf("/")+1,pkgActivity.indexOf("}")),""))
-                            }
-                        }
-                    }
-                    XmlPullParser.TEXT ->{
-
-                    }
-                }
-                type = xml.next()
-            }
-        } catch (e: XmlPullParserException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-    }
-
     interface Callbacks {
         fun callback(position: Int)
     }
@@ -339,10 +279,18 @@ class RequestFragment : BaseFragment() {
     }
 
     private fun onHide() {
+        sendRequest.animate()
+            .setDuration(200)
+            .translationY(DisplayUtil.dip2px(context, 54f).toFloat())
+            .start()
         callbacks.callback(0)
     }
 
     private fun onShow() {
+        sendRequest.animate()
+            .setDuration(200)
+            .translationY(0F)
+            .start()
         callbacks.callback(1)
     }
 
@@ -360,11 +308,11 @@ class RequestFragment : BaseFragment() {
         message.append("\r\n")
 
         var boolean = false
-        for ((index,value) in adapter.getSelect().withIndex()){
+        for ((index, value) in adapter.getSelect().withIndex()){
             if (value){
                 boolean = true
-                message.append("<!-- ${appsList[index+1].name} -->\r\n")
-                message.append("<item component=\"ComponentInfo{${appsList[index+1].pagName}/${appsList[index+1].activityName}}\" drawable=\"${appsList[index+1].name?.toLowerCase()?.replace(" ", "_")}\" />")
+                message.append("<!-- ${appsList[index].name} -->\r\n")
+                message.append("<item component=\"ComponentInfo{${appsList[index].pagName}/${appsList[index].activityName}}\" drawable=\"${appsList[index].name?.toLowerCase()?.replace(" ", "_")}\" />")
                 message.append("\r\n")
             }
         }

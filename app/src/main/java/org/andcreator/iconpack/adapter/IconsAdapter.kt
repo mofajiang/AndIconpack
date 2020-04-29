@@ -28,20 +28,18 @@ class IconsAdapter(private val context: Context,
 
     override fun onBindViewHolder(p0: IconsHolder, p1: Int) {
         val bean = dataList[p1]
-        Glide.with(context).load(bean.icon).into(p0.icon)
+        Glide.with(p0.icon).load(bean.icon).into(p0.icon)
         p0.icon.setOnClickListener {
-            clickListener.onClick(bean.icon,bean.name)
+            clickListener.onClick(p0.icon, bean.icon, bean.name)
         }
     }
 
     class IconsHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
-
         var icon: ImageView = itemView.findViewById(R.id.icons)
     }
 
-
     interface OnItemClickListener{
-        fun onClick(icon: Int,name: String)
+        fun onClick(iconView: ImageView, icon: Int, name: String)
     }
 
     private lateinit var clickListener: OnItemClickListener

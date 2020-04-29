@@ -1,7 +1,8 @@
 <resources>
 
-     Base application theme.
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    Base application theme.
+
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -10,6 +11,12 @@
         <item name="android:textColorPrimary">@color/black_text</item>
         <item name="android:windowBackground">@drawable/splash</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowAllowEnterTransitionOverlap">true</item>
+        <item name="android:windowAllowReturnTransitionOverlap">true</item>
+        <item name="android:windowExitTransition">@transition/navigation_transition</item>
+        <item name="android:windowReenterTransition">@transition/navigation_transition</item>
+        <item name="android:windowReturnTransition">@transition/navigation_transition</item>
+        <item name="android:windowEnterTransition">@transition/navigation_transition</item>
     </style>
 
     <style name="MyTabLayoutTextAppearance" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
@@ -26,16 +33,15 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
-    <style name="DialogActivity" parent="Theme.AppCompat.Light.Dialog">
-        <item name="textColorAlertDialogListItem">@color/colorPrimaryDark</item>
+    <style name="DialogActivity" parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="textColorAlertDialogListItem">@color/backgroundDark</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:textColor">@color/text_color</item>
-        <item name="android:textColorPrimary">@color/colorPrimaryDark</item>
+        <item name="android:textColorPrimary">@color/backgroundDark</item>
         <item name="android:windowCloseOnTouchOutside">true</item>
         <item name="windowNoTitle">true</item><!-- Activity无标题-->
-        <item name="windowActionBar">false</item>
     </style>
 
 
@@ -50,6 +56,23 @@
     <style name="fab_labels_style">
         <item name="android:background">@drawable/fab_label_background</item>
         <item name="android:textColor">@color/text_color</item>
+    </style>
+
+    <style name="Trans" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:textColor">@color/black_text</item>
+        <item name="android:textColorPrimary">@color/backgroundDark</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowAllowEnterTransitionOverlap">true</item>
+        <item name="android:windowAllowReturnTransitionOverlap">true</item>
+        <item name="android:windowEnterTransition">@transition/preview_transition</item>
     </style>
 
 </resources>

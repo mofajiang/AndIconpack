@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:background="@color/dialogBackground"
     tools:context=".activity.ImageDialog">
 
     <TextView
@@ -25,7 +26,7 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"/>
 
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/close"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

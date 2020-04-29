@@ -1,12 +1,16 @@
 package org.andcreator.iconpack.util
 
+import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.graphics.Rect
 import android.os.Build
+import android.os.Looper
+import android.util.Log
+import android.widget.Toolbar
 import org.andcreator.iconpack.R
 
 object Utils {
@@ -61,5 +65,66 @@ object Utils {
         val cmb = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val data = ClipData.newPlainText(context.getString(R.string.app_name), content.trim())
         cmb.setPrimaryClip(data)
+    }
+
+    fun Any.logger(tag: String = this.javaClass.simpleName): (String) -> Unit {
+        return {
+            Log.d("Andrew-$tag" , it)
+        }
+    }
+
+    fun Any.log(value: String) {
+        logger()(value)
+    }
+
+    val Any.objId: String
+        get() {
+            return System.identityHashCode(this).toString(16)
+        }
+
+    /**
+     * 获取界面到屏幕顶部的高度
+     */
+    private fun getAppTopHeight(context: Activity): Int{
+        val frame = Rect()
+        context.window.decorView.getWindowVisibleDisplayFrame(frame)
+        Log.e("appTopHeight",frame.top.toString())
+        return frame.top
+    }
+
+    /**
+     * Toolbar设置paddingTop
+     */
+    private fun fixToolbarPadding(paddingTop: Int, toolbar: Toolbar) {
+        if (paddingTop in 1..300){
+            Log.e("状态栏",paddingTop.toString())
+            toolbar.setPadding(0, paddingTop, 0, 0)
+            val lp = toolbar.layoutParams
+            lp.height = paddingTop + toolbar.height
+        }
+//        if (isStatusBarVisible()){
+//            val paddingTop = getStatusBarHeight()
+//            Log.e("状态栏",getStatusBarHeight().toString())
+//            toolbar.setPadding(0, paddingTop, 0, 0)
+//            val lp = toolbar.layoutParams
+//            lp.height = paddingTop + toolbar.height
+//        }
+    }
+
+    /**
+     * 获取状态栏的高度
+     */
+    fun getStatusBarHeight(context: Context): Int {
+        val resourceId = context.resources.getIdentifier("status_bar_height", "dimen", "android")
+        return try {
+            context.resources.getDimensionPixelSize(resourceId)
+        } catch (e: Resources.NotFoundException) {
+            0
+        }
+
+    }
+
+    fun isOnMainThread(): Boolean {
+        return Thread.currentThread() === Looper.getMainLooper().thread
     }
 }

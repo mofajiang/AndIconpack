@@ -1,6 +1,5 @@
 package org.andcreator.iconpack.fragment
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.DisplayMetrics
@@ -16,7 +15,6 @@ import org.andcreator.iconpack.activity.ImageDialog
 import org.andcreator.iconpack.adapter.HomeIconsAdapter
 import org.andcreator.iconpack.bean.AdaptionBean
 import org.andcreator.iconpack.util.DisplayUtil
-import java.lang.Math.min
 
 class IconsFragmentDialog private constructor():  DialogFragment() {
 

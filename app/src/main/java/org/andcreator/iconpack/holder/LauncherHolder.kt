@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.cardview.widget.CardView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.Priority
@@ -42,7 +41,7 @@ class LauncherHolder(itemView: View, private var listener: OnLauncherClickListen
         val iconResource = Utils.getIconResId(context.resources,context.packageName,iconName)
 
         val option = RequestOptions().priority(Priority.IMMEDIATE)
-        Glide.with(context)
+        Glide.with(launcherLogo)
             .load(
                 if (iconResource != 0)
                     iconResource

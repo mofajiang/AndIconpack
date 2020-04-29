@@ -23,8 +23,6 @@ import org.andcreator.iconpack.util.Utils
 import kotlinx.android.synthetic.main.fragment_apply.*
 import org.andcreator.iconpack.util.doAsyncTask
 import org.andcreator.iconpack.util.onUI
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
 import java.util.ArrayList
 
 /**
@@ -46,6 +44,7 @@ class ApplyFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        view.setPadding(0, Utils.getStatusBarHeight(context!!), 0, 0)
         initView()
     }
 

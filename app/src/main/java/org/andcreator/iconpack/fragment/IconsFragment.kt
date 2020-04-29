@@ -1,28 +1,35 @@
 package org.andcreator.iconpack.fragment
 
 
-import android.content.Intent
+
+import android.animation.ValueAnimator
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
+import android.view.inputmethod.InputMethodManager
+import android.widget.ImageView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.palette.graphics.Palette
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-
+import kotlinx.android.synthetic.main.fragment_icons.*
 import org.andcreator.iconpack.R
-import org.andcreator.iconpack.activity.ImageDialog
 import org.andcreator.iconpack.adapter.IconsAdapter
 import org.andcreator.iconpack.bean.IconsBean
-import kotlinx.android.synthetic.main.fragment_icons.*
-import org.andcreator.iconpack.util.doAsyncTask
-import org.andcreator.iconpack.util.onUI
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserException
-import java.io.IOException
+import org.andcreator.iconpack.util.*
+
 
 /**
  * A simple [Fragment] subclass.
@@ -30,9 +37,30 @@ import java.io.IOException
  */
 class IconsFragment : BaseFragment() {
 
-    private val iconsList = ArrayList<IconsBean>()
+    /**
+     * 图标列表
+     */
+    private var iconsList = ArrayList<IconsBean>()
+
+    /**
+     * 搜索图标列表
+     */
     private var searchIconsList = ArrayList<IconsBean>()
+
+    /**
+     * 图标列表适配器
+     */
     private lateinit var adapter: IconsAdapter
+
+    /**
+     * 共享元素动画帮助类
+     */
+    private var shareElementHelper: ShareElementHelper = ShareElementHelper()
+
+    // 图标默认颜色
+    private var iconColor = -0x1
+
+    private var isDark = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -44,70 +72,181 @@ class IconsFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        view.setPadding(0, Utils.getStatusBarHeight(context!!), 0, 0)
+        isDark = ContextCompat.getColor(context!!, R.color.backgroundColor) != ContextCompat.getColor(context!!, R.color.white)
+        iconColor = ContextCompat.getColor(context!!, R.color.backgroundColor)
         initView()
     }
 
     private fun initView(){
-        recyclerIcons.layoutManager = GridLayoutManager(context, 4)
-        adapter = IconsAdapter(context!!,iconsList)
-        recyclerIcons.adapter = adapter
-        recyclerIcons.addOnScrollListener(object : HideScrollListener() {
+        actionSearch.setOnClickListener {
+            SnackbarUtil().SnackbarUtil(this.context!!, recyclerIcons, "白色")
+        }
 
-        })
+        recyclerIcons.layoutManager = GridLayoutManager(context, 4)
+        adapter = IconsAdapter(context!!, iconsList)
+        recyclerIcons.adapter = adapter
+        recyclerIcons.addOnScrollListener(object : HideScrollListener() {})
+
+        // 设置图标点击预览
         adapter.setClickListener(object : IconsAdapter.OnItemClickListener{
-            override fun onClick(icon: Int, name: String) {
-                val intent = Intent(context!!, ImageDialog::class.java)
-                intent.putExtra("icon",icon)
-                intent.putExtra("name",name)
-                startActivity(intent)
+            override fun onClick(iconView: ImageView, icon: Int, name: String) {
+
+                closeKeyboard()
+                background.visibility = View.VISIBLE
+
+                previewName.text = name
+
+                if (isDark) {
+                    setBackgroundColor(ContextCompat.getColor(context!!, R.color.backgroundColor), iconColor)
+                } else {
+
+                    val builder: Palette.Builder = Palette.from(drawableToBitmap(icon))
+                    builder.generate { palette -> //获取到充满活力的这种色调
+                        if (palette != null && palette.vibrantSwatch != null) {
+                            iconColor = palette.vibrantSwatch!!.rgb
+                        } else if (palette != null && palette.lightVibrantSwatch != null) {
+                            iconColor = palette.lightVibrantSwatch!!.rgb
+                        }else if (palette != null && palette.mutedSwatch != null) {
+                            iconColor = palette.mutedSwatch!!.rgb
+                        }else {
+                            Toast.makeText(context, "获取不到颜色", Toast.LENGTH_SHORT).show()
+                        }
+                        setBackgroundColor(ContextCompat.getColor(context!!, R.color.backgroundColor), iconColor)
+                    }
+                }
+
+                recyclerIcons.animate()
+                    .setDuration(300L)
+                    .alpha(0.1f)
+                    .scaleX(0.94F)
+                    .scaleY(0.94F)
+                    .start()
+
+                searchBar.animate()
+                    .setDuration(300L)
+                    .alpha(0.6F)
+                    .start()
+
+                shareElementHelper.with(icon, previewIcon, iconView).setStartListener(ValueAnimator.AnimatorUpdateListener {
+                    phone.visibility = View.VISIBLE
+                    previewName.visibility = View.VISIBLE
+                    val animatedValue = it.animatedValue as Float
+                    phone.translationY = phone.height - (phone.height * animatedValue)
+                    phone.alpha = animatedValue
+                    previewName.translationY = previewName.height - (previewName.height * animatedValue)
+                    previewName.alpha = animatedValue
+
+                }).setEndListener(ValueAnimator.AnimatorUpdateListener {
+                    val animatedValue = it.animatedValue as Float
+                    phone.translationY = phone.height * animatedValue
+                    phone.alpha = 1 - animatedValue
+                    previewName.translationY = previewName.height * animatedValue
+                    previewName.alpha = 1 - animatedValue
+                })
+                onHide()
             }
         })
+
+        background.setOnClickListener {
+            cancelPreview()
+        }
+
+        // 加载图标
+        reloadIcons()
+
+        closeSearch.setOnClickListener {
+            if (searchInput.text.isNotEmpty()){
+                clearSearch()
+            }
+        }
+
+        actionSearch.setOnClickListener {
+            closeKeyboard()
+            search(searchInput.text.toString())
+        }
+
+        searchInput.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(p0: Editable?) {
+                search(p0.toString())
+                Log.e("SearchTextChange1", p0.toString())
+            }
+
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                Log.e("SearchTextChange2", p0.toString())
+            }
+
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                Log.e("SearchTextChange3", p0.toString())
+            }
+
+        })
+    }
+
+    /**
+     * 是否是窗口模式(分屏)
+     */
+    private fun isStatusBarVisible():Boolean {
+        val isInMultiWindowMode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && activity!!.isInMultiWindowMode
+        //窗口模式或者SDK小于19，不设置状态栏透明
+        if (isInMultiWindowMode) {
+            return false
+        }
+        return true
+    }
+
+    fun cancelPreview(): Boolean {
+
+        if (background.visibility == View.VISIBLE) {
+            shareElementHelper.setEndAnimatorListener(object : ShareElementHelper.EndListener {
+                override fun onEnd() {
+                    background.visibility = View.GONE
+                }
+            }).exitAnimator()
+            setBackgroundColor(iconColor, ContextCompat.getColor(context!!, R.color.backgroundColor))
+
+            recyclerIcons.animate()
+                .setDuration(300L)
+                .alpha(1f)
+                .scaleX(1F)
+                .scaleY(1F)
+                .start()
+
+            searchBar.animate()
+                .setDuration(300L)
+                .alpha(1F)
+                .start()
+            onShow()
+            return true
+        }
+
+        return false
+    }
+
+    private fun setBackgroundColor(startColor: Int, endColor: Int) {
+        val colorChange = ValueAnimator.ofFloat(0F, 1F)
+        colorChange.duration = 300L
+        colorChange.addUpdateListener {
+            backgroundColor.setBackgroundColor(ColorUtil.getColor(startColor, endColor, it.animatedValue as Float))
+        }
+        colorChange.start()
+    }
+
+    private fun clearSearch() {
+        searchInput.setText("")
+        closeKeyboard()
         reloadIcons()
     }
 
-    private fun loadIcons(){
-        iconsList.clear()
-        val xml = context!!.resources.getXml(R.xml.drawable)
-        var type = xml.eventType
-        var category = "All"
-        try {
-            while (type != XmlPullParser.END_DOCUMENT){
-                when(type){
-                    XmlPullParser.START_TAG ->{
-
-                        if (xml.name == "category" && xml.attributeCount == 1){
-                            category = xml.getAttributeValue(0)
-                        }
-
-                        if (xml.name == "item"){
-                            if (xml.attributeCount == 1){
-                                val drawableString = xml.getAttributeValue(0)
-                                val drawableId = context!!.resources.getIdentifier(drawableString,"drawable",context!!.packageName)
-                                iconsList.add(IconsBean(category, drawableId,drawableString))
-                            }else{
-                                val drawableString = xml.getAttributeValue(0)
-                                val drawableName = xml.getAttributeValue(1)
-                                val drawableId = context!!.resources.getIdentifier(drawableString,"drawable",context!!.packageName)
-                                iconsList.add(IconsBean(category, drawableId,drawableName))
-                            }
-                        }
-                    }
-                    XmlPullParser.TEXT ->{
-
-                    }
-                }
-                type = xml.next()
-            }
-        } catch (e: XmlPullParserException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
+    private fun closeKeyboard(){
+        searchInput.clearFocus()
+        val `in` = context!!.getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE) as InputMethodManager
+        `in`.hideSoftInputFromWindow(searchInput.windowToken, 0)
     }
+
 
     fun search(name: String) {
         if (name.isNotEmpty()){
-
             doAsyncTask {
                 iconsList.clear()
                 for (iconName in searchIconsList) {
@@ -126,18 +265,17 @@ class IconsFragment : BaseFragment() {
         }
     }
 
-    fun reloadIcons() {
-        doAsyncTask {
-            loadIcons()
-            if (isDestroyed){
-                onUI {
-                    if (loading.visibility == View.VISIBLE){
-                        loading.visibility = View.GONE
-                    }
-                    adapter.notifyDataSetChanged()
-                    searchIconsList.clear()
-                    searchIconsList = iconsList.clone() as ArrayList<IconsBean>
+    private fun reloadIcons() {
+        if (isDestroyed){
+            AppAdaptationHelper.setContext(context!!).getAdaptationIcon {
+                iconsList.clear()
+                iconsList.addAll(it)
+                if (loading.visibility == View.VISIBLE){
+                    loading.visibility = View.GONE
                 }
+                adapter.notifyDataSetChanged()
+                searchIconsList.clear()
+                searchIconsList = iconsList.clone() as ArrayList<IconsBean>
             }
         }
     }
@@ -184,4 +322,7 @@ class IconsFragment : BaseFragment() {
         }
     }
 
+    private fun drawableToBitmap(id: Int): Bitmap {
+        return BitmapFactory. decodeResource (resources, id)
+    }
 }

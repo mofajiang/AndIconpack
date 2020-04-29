@@ -1,27 +1,11 @@
 package org.andcreator.iconpack.activity
 
-import android.Manifest
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.annotation.SuppressLint
-import android.app.WallpaperManager
-import android.content.Context
-import android.content.pm.PackageManager
-import android.content.res.ColorStateList
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.os.*
-import android.text.Editable
-import android.text.TextWatcher
-import android.util.Log
-import com.google.android.material.appbar.AppBarLayout
-import com.google.android.material.snackbar.Snackbar
-import androidx.core.app.ActivityCompat
+import android.view.LayoutInflater
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
@@ -31,86 +15,42 @@ import androidx.interpolator.view.animation.FastOutLinearInInterpolator
 import androidx.interpolator.view.animation.LinearOutSlowInInterpolator
 import androidx.appcompat.app.AppCompatActivity
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
-import android.view.animation.DecelerateInterpolator
-import android.view.inputmethod.InputMethodManager
-import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.FragmentStatePagerAdapter
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
 import org.andcreator.iconpack.R
 import org.andcreator.iconpack.fragment.*
-import org.andcreator.iconpack.listener.AppBarStateChangeListener
 
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.search_box.*
-import org.andcreator.iconpack.bean.AdaptionBean
+import org.andcreator.iconpack.adapter.PagerBarAdapter
+import org.andcreator.iconpack.bean.PagerBarBean
 import org.andcreator.iconpack.util.*
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserException
-import org.xmlpull.v1.XmlPullParserFactory
-import uk.co.samuelwall.materialtaptargetprompt.MaterialTapTargetPrompt
+import org.andcreator.iconpack.view.NavigationPagerBar
 import java.io.*
-import java.lang.StringBuilder
 import java.util.ArrayList
-import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var adapter: SectionsPagerAdapter
-    private lateinit var requestsFragment: RequestFragment
-    private lateinit var iconsFragment: IconsFragment
-    private lateinit var homeFragment: HomeFragment
-    private lateinit var applyFragment: ApplyFragment
-    private lateinit var aboutFragment: AboutFragment
-    private val icons = ArrayList<Int>()
-    private var tabTextColor = 0xffffff
-    private var fabStatus = 1
+    private var requestsFragment: RequestFragment? = null
+    private var iconsFragment: IconsFragment? = null
+    private var homeFragment: HomeFragment? = null
+    private var applyFragment: ApplyFragment? = null
+    private var aboutFragment: AboutFragment? = null
+    private var tabTextColor = 0xfffff
+    private var isDark = false
 
-    /**
-     * 获取未授权的权限
-     */
-    private lateinit var permissionList: MutableList<String>
-
-    /**
-     * 请求权限的返回值
-     */
-    private val permissionCode = 1
-
-    /**
-     * 已适配列表
-     */
-    var adaptations: ArrayList<AdaptionBean> = ArrayList()
-
-    private var mHandler = @SuppressLint("HandlerLeak")
+    private val mHandler = @SuppressLint("HandlerLeak")
     object : Handler(){
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
             when(msg.what){
                 1 -> {
-                    explore()
+                    updateContent()
                 }
                 2 ->{
                     updateContent()
-                }
-                3 ->{
-                    val data = msg.obj.toString()
-                    AlertDialog.Builder(this@MainActivity)
-                        .setTitle("出现错误")
-                        .setMessage("appfilter.xml 很可能出错，请检查：\n${data}")
-                        .setPositiveButton("点击复制") { _, _ ->
-                            Utils.copy(data, this@MainActivity)
-                        }.setNeutralButton(resources.getString(R.string.cancel)){_,_->
-
-                        }.show()
                 }
             }
         }
@@ -118,16 +58,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        isDark = ContextCompat.getColor(this, R.color.backgroundColor) == ContextCompat.getColor(this, R.color.white)
+        setThemeDefault(isDark)
 
-        //API支持就更改Android NavigationBar Color
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            window.navigationBarColor = ContextCompat.getColor(this, R.color.backgroundColor)
-        }else{
-            window.navigationBarColor = Color.BLACK
-        }
         setContentView(R.layout.activity_main)
-        getPermission()
-        setSupportActionBar(toolbar)
         checkVersion()
         initView()
 
@@ -135,60 +69,34 @@ class MainActivity : AppCompatActivity() {
 
     private fun initView(){
 
-        loadIcons()
+        AppAdaptationHelper.setContext(this).getAppFilterError {
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("出现错误")
+                .setMessage("appfilter.xml 很可能出错，请检查：\n${it}")
+                .setPositiveButton("点击复制") { _, _ ->
+                    Utils.copy(it, this@MainActivity)
+                }.setNeutralButton(resources.getString(R.string.cancel)){_,_->
+
+                }.show()
+        }
+
         tabTextColor = ContextCompat.getColor(this@MainActivity,R.color.white)
-        collapsingToolbar.setExpandedTitleColor(tabTextColor) //设置还没收缩时状态下字体颜色
-        collapsingToolbar.setCollapsedTitleTextColor(ContextCompat.getColor(this@MainActivity,R.color.black_text))//设置收缩后Toolbar上字体的颜色
-        collapsingToolbar.title = resources.getString(R.string.app_name)
-        collapsingToolbar.expandedTitleMarginBottom = DisplayUtil.dip2px(this,60f)
 
         adapter = SectionsPagerAdapter(supportFragmentManager)
         setupViewPager(pager)
         pager.offscreenPageLimit = 5
-        tab.setupWithViewPager(pager)
-        tab.setSelectedTabIndicatorColor(tabTextColor)
 
-        appBar.addOnOffsetChangedListener(object : AppBarStateChangeListener(){
-            override fun onStateChanged(appBarLayout: AppBarLayout?, state: State?, i: Int, max: Int) {
-                tab.tabTextColors = ColorStateList.valueOf(ColorUtil.getColor(tabTextColor, ContextCompat.getColor(this@MainActivity,R.color.text_color),i.toFloat(),max.toFloat()))
-                tab.setSelectedTabIndicatorColor(ColorUtil.getColor(tabTextColor, ContextCompat.getColor(this@MainActivity,R.color.text_color),i.toFloat(),max.toFloat()))
+        pagerPointBars.setAdapter(getPagerBarAdapter())
+        pagerPointBars.setClickListener(object : NavigationPagerBar.OnItemClickListener{
+            override fun onClick(position: Int) {
+                pager.currentItem = position
             }
         })
 
-        closeSearch.setOnClickListener {
-            if (searchInput.text.isNotEmpty()){
-                searchInput.setText("")
-            }else{
-                closeKeyboard()
-                search()
-                iconsFragment.reloadIcons()
-            }
-        }
-
-        actionSearch.setOnClickListener {
-            closeKeyboard()
-            iconsFragment.search(searchInput.text.toString())
-        }
-
-        searchInput.addTextChangedListener(object : TextWatcher{
-            override fun afterTextChanged(p0: Editable?) {
-//                iconsFragment.search(p0.toString())
-                Log.e("SearchTextChange1", p0.toString())
-            }
-
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                Log.e("SearchTextChange2", p0.toString())
-            }
-
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                Log.e("SearchTextChange3", p0.toString())
-            }
-
-        })
+        pagerPointBars.onAnimationOffset(0)
 
         pager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener{
             override fun onPageScrolled(p0: Int, p1: Float, p2: Int) {
-
             }
 
             override fun onPageScrollStateChanged(p0: Int) {
@@ -196,258 +104,78 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onPageSelected(p0: Int) {
-                when(p0){
-                    0 ->{
-                        if (fabStatus!=1){
-                            fabStatus = 1
-                            changeFabIcon(R.drawable.ic_search_white_24dp)
-                        }
-                        closeSearch()
-                    }
-                    1 ->{
-                        if (fabStatus!=1){
-                            fabStatus = 1
-                            changeFabIcon(R.drawable.ic_search_white_24dp)
-                        }
-                    }
-
-                    2 ->{
-                        fabStatus = 2
-                        changeFabIcon(R.drawable.ic_send_white_24dp)
-                        closeSearch()
-                    }
-                    3 ->{
-                        if (fabStatus!=1){
-                            fabStatus = 1
-                            changeFabIcon(R.drawable.ic_search_white_24dp)
-                        }
-                        closeSearch()
-                    }
-                    4 ->{
-                        if (fabStatus!=1){
-                            fabStatus = 1
-                            changeFabIcon(R.drawable.ic_search_white_24dp)
-                        }
-                        closeSearch()
+                pagerPointBars.onAnimation(p0)
+                if (p0!= 4){
+                    setThemeDefault(isDark)
+                }else{
+                    if (aboutFragment!!.isDark){
+                        setTheme(true)
+                    }else{
+                        setTheme(false)
                     }
                 }
             }
 
         })
+    }
 
-        refresh.setOnClickListener {
-            loadIcons()
+    private fun setTheme(isDark: Boolean){
+
+        if (isDark){
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        }else{
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_VISIBLE or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
         }
+    }
 
+    private fun setThemeDefault(isDark: Boolean){
 
-        fabSend.setOnClickListener {
+        if(isDark){
 
-            if (fabStatus==2){
-                if (permissionList.isEmpty()){
-
-                    requestsFragment.send()
-
-                }else{
-                    Snackbar.make(fabSend,resources.getString(R.string.get_permission),
-                        Snackbar.LENGTH_SHORT).show()
-                }
-            }else {
-                pager.currentItem = 1
-                search()
+            // Toast.makeText(this, "亮色模式", Toast.LENGTH_SHORT).show()
+            // 展开状态使用状态栏和导航栏暗色
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                        or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR)
             }
-        }
-    }
+            window.statusBarColor = Color.TRANSPARENT
+            window.navigationBarColor = Color.WHITE
 
-    private fun closeSearch() {
-        if (searchBox.visibility == View.VISIBLE){
-            searchInput.setText("")
-            closeKeyboard()
-            search()
-            iconsFragment.reloadIcons()
-        }
-    }
-
-    private fun search() {
-
-        if (searchBox.visibility != View.VISIBLE){
-
-            appBar.setExpanded(true)
-
-            ObjectAnimator.ofFloat(icon1, "alpha",1f, 0f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon1, "translationY", 0f, 200f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon2, "alpha",1f, 0f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon2, "translationY", 0f, 200f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon3, "alpha",1f, 0f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon3, "translationY", 0f, 200f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon4, "alpha",1f, 0f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon4, "translationY", 0f, 200f).setDuration(300).start()
-
-            val searchBoxAnimation = ObjectAnimator.ofFloat(searchBox, "translationY", -200f, 0f)
-            ObjectAnimator.ofFloat(searchBox, "alpha",0f, 1f).setDuration(300).start()
-            searchBoxAnimation.addListener(object : Animator.AnimatorListener{
-                override fun onAnimationRepeat(p0: Animator?) {
-
-                }
-
-                override fun onAnimationEnd(p0: Animator?) {
-                    searchInput.isFocusable = true
-                    searchInput.isFocusableInTouchMode = true
-                    searchInput.requestFocus()
-
-                    val inputManager =
-                        searchInput.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    inputManager.showSoftInput(searchInput, 0)
-
-                }
-
-                override fun onAnimationCancel(p0: Animator?) {
-
-                }
-
-                override fun onAnimationStart(p0: Animator?) {
-                    searchBox.visibility = View.VISIBLE
-                }
-            })
-            searchBoxAnimation.duration = 300
-            searchBoxAnimation.start()
+            //API支持就更改Android NavigationBar Color
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                window.navigationBarColor = ContextCompat.getColor(this, R.color.backgroundColor)
+            }else{
+                window.navigationBarColor = Color.BLACK
+            }
         }else {
 
-            ObjectAnimator.ofFloat(icon1, "translationY", 200f, 0f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon1, "alpha",0f, 1f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon2, "translationY", 200f, 0f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon2, "alpha",0f, 1f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon3, "translationY", 200f, 0f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon3, "alpha",0f, 1f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon4, "translationY", 200f, 0f).setDuration(300).start()
-            ObjectAnimator.ofFloat(icon4, "alpha",0f, 1f).setDuration(300).start()
+            // Toast.makeText(this, "暗色模式", Toast.LENGTH_SHORT).show()
+            // 展开状态使用状态栏和导航栏暗色
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_VISIBLE)
+            window.statusBarColor = Color.TRANSPARENT
+            window.navigationBarColor = Color.BLACK
 
-            val searchBoxAnimation = ObjectAnimator.ofFloat(searchBox, "translationY", 0f, -200f)
-            ObjectAnimator.ofFloat(searchBox, "alpha",1f, 0f).setDuration(300).start()
-            searchBoxAnimation.addListener(object : Animator.AnimatorListener{
-                override fun onAnimationRepeat(p0: Animator?) {
-
-                }
-
-                override fun onAnimationEnd(p0: Animator?) {
-
-                    searchBox.visibility = View.GONE
-                }
-
-                override fun onAnimationCancel(p0: Animator?) {
-
-                }
-
-                override fun onAnimationStart(p0: Animator?) {
-                }
-            })
-            searchBoxAnimation.duration = 300
-            searchBoxAnimation.start()
-        }
-
-    }
-
-    private fun closeKeyboard(){
-        searchInput.clearFocus()
-        val `in` = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        `in`.hideSoftInputFromWindow(searchInput.windowToken, 0)
-
-    }
-
-    /**
-     * 检索壁纸颜色
-     */
-    private fun checkWallpaper() {
-
-        val wallpaperManager = WallpaperManager.getInstance(this)
-
-        Glide.with(this@MainActivity).load(wallpaperManager.drawable).transition(
-            DrawableTransitionOptions().crossFade(300)).into(headImg)
-
-        doAsyncTask {
-
-            tabTextColor = if (getBright(Bitmap.createScaledBitmap(drawableToBitmap(wallpaperManager.drawable), 500, 300, false)) > 220){
-                ContextCompat.getColor(this@MainActivity, R.color.text_color)
+            //API支持就更改Android NavigationBar Color
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                window.navigationBarColor = ContextCompat.getColor(this, R.color.backgroundColor)
             }else{
-                ContextCompat.getColor(this@MainActivity, R.color.white)
-            }
-
-            if (!isDestroyed){
-                onUI {
-                    collapsingToolbar.setExpandedTitleColor(tabTextColor) //设置还没收缩时状态下字体颜色
-                    tab.tabTextColors = ColorStateList.valueOf(tabTextColor)
-                    tab.setSelectedTabIndicatorColor(tabTextColor)
-                }
+                window.navigationBarColor = Color.BLACK
             }
         }
-    }
-
-    private fun getBright(bm: Bitmap): Int {
-        val width = bm.width
-        val height = bm.height
-        var r: Int
-        var g: Int
-        var b: Int
-        var count = 0
-        var bright = 0
-        for (i: Int in 0 until width) {
-            for (j: Int in 0 until height) {
-                count++
-                val localTemp = bm.getPixel(i, j)
-                r = localTemp.or(0xff00ffff.toInt()).shr(8).and(0x00ff)
-                g = localTemp.or(0xffff00ff.toInt()).shr(8).and(0x0000ff)
-                b = localTemp.or(0xffffff00.toInt()).and(0x0000ff)
-                bright = (bright + 0.299 * r + 0.587 * g + 0.114 * b).toInt()
-            }
-        }
-        return bright/count
-    }
-
-    private fun drawableToBitmap(drawable: Drawable): Bitmap {
-        val bitmap: Bitmap
-
-        if (drawable is BitmapDrawable) {
-            val bitmapDrawable = drawable
-            if(bitmapDrawable.bitmap != null) {
-                //压缩bitmap以便更快识别图像
-                return bitmapDrawable.bitmap
-            }
-        }
-
-        if(drawable.intrinsicWidth <= 0 || drawable.intrinsicHeight <= 0) {
-            bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
-        } else {
-            bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-        }
-
-        val canvas = Canvas(bitmap)
-        drawable.setBounds(0, 0, canvas.width, canvas.height)
-        drawable.draw(canvas)
-
-        return bitmap
-    }
-
-    /**
-     * 探索App 特性与功能
-     */
-    private fun explore() {
-        val accentColor = ContextCompat.getColor(this, R.color.primary)
-        MaterialTapTargetPrompt.Builder(this)
-            .setTarget(R.id.fabSend)
-            .setPrimaryText("探索图标")
-            .setSecondaryText("点击此处搜索图标或应用至启动器!")
-            .setBackgroundColour(Color.argb(244, Color.red(accentColor), Color.green(accentColor), Color.blue(accentColor)))
-            .setPromptStateChangeListener { prompt, state ->
-                if (state == MaterialTapTargetPrompt.STATE_DISMISSED){
-                    updateContent()
-                }
-            }.show()
     }
 
     /**
      * 检查版本是否与上次一致
      */
     private fun checkVersion() {
-
 
         doAsyncTask{
 
@@ -456,18 +184,18 @@ class MainActivity : AppCompatActivity() {
                 PreferencesUtil.put(this@MainActivity, "first", true)
                 PreferencesUtil.put(this@MainActivity, "versionCode", Utils.getAppVersion(this@MainActivity))
 
-                //保存到新文件
-                saveAppFilter(parser())
-
                 val file = File(filesDir, "appfilter.xml")
                 val files = File(file.parent)
                 files.mkdirs()
                 file.createNewFile()
-
                 val msg = Message()
                 msg.what = 1
                 mHandler.sendMessage(msg)
 
+                //保存到新文件
+                AppAdaptationHelper.setContext(this).getAppFilterListener {
+                    saveAppFilter(it)
+                }
             }
 
             //判断是否首次更新软件
@@ -482,19 +210,19 @@ class MainActivity : AppCompatActivity() {
                 }catch (e: IOException){
 
                 }
+
                 //新版本保存到新文件(获取新版数据)
-                saveAppFilter(parser())
+                AppAdaptationHelper.setContext(this).getAppFilterListener {
+                    saveAppFilter(it)
+                }
+
                 val msg = Message()
                 msg.what = 2
                 mHandler.sendMessage(msg)
                 PreferencesUtil.put(this@MainActivity, "versionCode", Utils.getAppVersion(this@MainActivity))
             }else{
-                parser()
+                AppAdaptationHelper.setContext(this)
             }
-
-            val msg = Message()
-            msg.what = 4
-            mHandler.sendMessage(msg)
         }
     }
 
@@ -505,63 +233,6 @@ class MainActivity : AppCompatActivity() {
         UpdateFragment().show(supportFragmentManager,"UpdateDialog")
     }
 
-    /**
-     * 获取必要权限
-     */
-    private fun getPermission(){
-        val permission = arrayOf(
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE)
-        permissionList = mutableListOf()
-        permissionList.clear()
-
-        //获取未授权的权限
-        for (permiss:String in permission){
-            if (ContextCompat.checkSelfPermission(this@MainActivity, permiss) != PackageManager.PERMISSION_GRANTED) {
-                permissionList.add(permiss)
-            }
-        }
-
-        if (permissionList.isNotEmpty()){
-            //请求权限方法
-            val permissions = permissionList.toTypedArray()
-            ActivityCompat.requestPermissions(this@MainActivity, permissions, permissionCode)
-        }else{
-            checkWallpaper()
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        when(requestCode){
-            permissionCode ->{
-                if (grantResults.isNotEmpty() && grantResults[0] != PackageManager.PERMISSION_GRANTED){
-                    Toast.makeText(this,resources.getString(R.string.need_permission), Toast.LENGTH_SHORT).show()
-                }else{
-                    permissionList.clear()
-                    checkWallpaper()
-                }
-            }
-            else ->{}
-        }
-    }
-
-    /*
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
-        }
-    }*/
-
     @SuppressLint("MissingSuperCall")
     override fun onSaveInstanceState(outState: Bundle) {
     }
@@ -569,7 +240,7 @@ class MainActivity : AppCompatActivity() {
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
 
-        homeFragment.setCallbackListener(object : HomeFragment.Callbacks{
+        homeFragment?.setCallbackListener(object : HomeFragment.Callbacks{
             override fun callback(position: Int) {
                 when(position) {
                     1 -> pager.currentItem = 1
@@ -577,6 +248,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        homeFragment?.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     private fun setupViewPager(viewPager: ViewPager) {
@@ -585,13 +261,13 @@ class MainActivity : AppCompatActivity() {
         requestsFragment = RequestFragment()
         applyFragment = ApplyFragment()
         aboutFragment = AboutFragment()
-        homeFragment.retainInstance = true
-        iconsFragment.retainInstance = true
-        requestsFragment.retainInstance = true
-        applyFragment.retainInstance = true
-        aboutFragment.retainInstance = true
+        homeFragment?.retainInstance = true
+        iconsFragment?.retainInstance = true
+        requestsFragment?.retainInstance = true
+        applyFragment?.retainInstance = true
+        aboutFragment?.retainInstance = true
 
-        homeFragment.setCallbackListener(object : HomeFragment.Callbacks{
+        homeFragment?.setCallbackListener(object : HomeFragment.Callbacks{
             override fun callback(position: Int) {
                 when(position) {
                     1 -> pager.currentItem = 1
@@ -599,30 +275,31 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
-        requestsFragment.setCallbackListener(object : RequestFragment.Callbacks{
+
+        requestsFragment?.setCallbackListener(object : RequestFragment.Callbacks{
             override fun callback(position: Int) {
                 when (position) {
-                    0 -> hide(fabSend)
-                    1 -> show(fabSend)
-                    2 -> SnackbarUtil().SnackbarUtil(this@MainActivity, fabSend ,resources.getString(R.string.no_choose_app))
+                    0 -> hide(pagerPointBar)
+                    1 -> show(pagerPointBar)
+                    2 -> SnackbarUtil().SnackbarUtil(this@MainActivity, pagerPointBar ,resources.getString(R.string.no_choose_app))
                 }
             }
         })
 
-        iconsFragment.setCallbackListener(object : IconsFragment.Callbacks{
+        iconsFragment?.setCallbackListener(object : IconsFragment.Callbacks{
             override fun callback(position: Int) {
-                when (position) {
-                    0 -> hide(fabSend)
-                    1 -> show(fabSend)
+                when(position) {
+                    0 -> hide(pagerPointBar)
+                    1 -> show(pagerPointBar)
                 }
             }
         })
 
-        adapter.addFragment(homeFragment,resources.getString(R.string.home))
-        adapter.addFragment(iconsFragment,resources.getString(R.string.icons))
-        adapter.addFragment(requestsFragment,resources.getString(R.string.icon_adapter))
-        adapter.addFragment(applyFragment,resources.getString(R.string.apply))
-        adapter.addFragment(aboutFragment,resources.getString(R.string.about))
+        adapter.addFragment(homeFragment!!, resources.getString(R.string.home))
+        adapter.addFragment(iconsFragment!!, resources.getString(R.string.icons))
+        adapter.addFragment(requestsFragment!!, resources.getString(R.string.icon_adapter))
+        adapter.addFragment(applyFragment!!, resources.getString(R.string.apply))
+        adapter.addFragment(aboutFragment!!, resources.getString(R.string.about))
         viewPager.adapter = adapter
     }
 
@@ -658,6 +335,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * 底部Tab的适配器
+     */
+    private fun getPagerBarAdapter(): PagerBarAdapter{
+
+        return object : PagerBarAdapter() {
+
+            override fun getHolder(): ArrayList<PagerBarBean> {
+                val items  = ArrayList<PagerBarBean>()
+                items.add(PagerBarBean(R.drawable.ic_home_24px, ContextCompat.getColor(this@MainActivity, R.color.colorAccent), resources.getString(R.string.home),
+                    isIconAnim = false,
+                    isTitleAnim = false
+                ))
+                items.add(PagerBarBean(R.drawable.ic_twotone_dashboard_24px, ContextCompat.getColor(this@MainActivity, R.color.colorAccent), resources.getString(R.string.icons),
+                    isIconAnim = false,
+                    isTitleAnim = false
+                ))
+                items.add(PagerBarBean(R.drawable.ic_category_24px, ContextCompat.getColor(this@MainActivity, R.color.colorAccent), resources.getString(R.string.icon_adapter),
+                    isIconAnim = false,
+                    isTitleAnim = false
+                ))
+                items.add(PagerBarBean(R.drawable.ic_style_24px, ContextCompat.getColor(this@MainActivity, R.color.colorAccent), resources.getString(R.string.apply),
+                    isIconAnim = false,
+                    isTitleAnim = false
+                ))
+                items.add(PagerBarBean(R.drawable.ic_emoji_events_24px, ContextCompat.getColor(this@MainActivity, R.color.colorAccent),resources.getString(R.string.about),
+                    isIconAnim = false,
+                    isTitleAnim = false
+                ))
+                return items
+            }
+
+            override fun createMenuItem(parent: ViewGroup, index: Int): View {
+                return LayoutInflater.from(parent.context).inflate(R.layout.item_pagerbar, parent, false)
+            }
+
+            override fun getCount(): Int {
+                return 5
+            }
+
+        }
+    }
 
     /**
      * 显示的动画
@@ -665,14 +384,8 @@ class MainActivity : AppCompatActivity() {
     private fun show(view: View) {
         view.animate().cancel()
 
-        // If the view isn't visible currently, we'll animate it from a single pixel
-        view.alpha = 0f
-        view.scaleY = 0f
-        view.scaleX = 0f
-
         view.animate()
-            .scaleX(1f)
-            .scaleY(1f)
+            .translationY(0f)
             .alpha(1f)
             .setDuration(200)
             .setInterpolator(LinearOutSlowInInterpolator())
@@ -694,8 +407,7 @@ class MainActivity : AppCompatActivity() {
     private fun hide(view: View) {
         view.animate().cancel()
         view.animate()
-            .scaleX(0f)
-            .scaleY(0f)
+            .translationY(view.height.toFloat())
             .alpha(0f)
             .setDuration(200)
             .setInterpolator(FastOutLinearInInterpolator())
@@ -717,172 +429,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             })
-    }
-
-    private fun changeFabIcon(icon: Int){
-        val animator = ObjectAnimator.ofFloat(fabSend, "rotation", 0f, 360f)
-        animator.duration = 360
-        animator.interpolator = DecelerateInterpolator()
-        animator.start()
-
-        fabSend.setImageResource(icon)
-    }
-
-    private fun loadIcons(){
-        val rs =  ArrayList<Int>()
-
-        doAsyncTask {
-            if (icons.size == 0){
-                val xml = resources.getXml(R.xml.drawable)
-                var type = xml.eventType
-                try {
-                    while (type != XmlPullParser.END_DOCUMENT){
-                        when(type){
-                            XmlPullParser.START_TAG ->{
-                                if (xml.name == "item"){
-//                            Log.e("6666666",xml.getAttributeValue(0))
-//                            Log.e("6666666",xml.getAttributeValue(1))
-
-                                    val drawableString = xml.getAttributeValue(0)
-                                    val drawableId = resources.getIdentifier(drawableString,"drawable",this@MainActivity.packageName)
-                                    icons.add(drawableId)
-                                }
-                            }
-                            XmlPullParser.TEXT ->{
-
-                            }
-                        }
-                        type = xml.next()
-                    }
-                } catch (e: XmlPullParserException) {
-                    e.printStackTrace()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-            }
-
-            var b = true
-            while (b){
-                var bo = true
-                val r = Random.nextInt(icons.size)%(icons.size+1)
-                for (j: Int in rs){
-                    if (j == r){
-                        //如果在数组里找到这个随机数则跳出循环
-                        if (rs.size >= 4){
-                            b = false
-                        }
-                        bo = false
-                        break
-                    }
-                }
-
-                if (bo){
-                    if (rs.size < 4){
-                        rs.add(r)
-                    }
-                }
-            }
-            if (!isDestroyed){
-                onUI {
-                    loadAndAnimIcon(icons[rs[0]], icon1)
-                    loadAndAnimIcon(icons[rs[1]], icon2)
-                    loadAndAnimIcon(icons[rs[2]], icon3)
-                    loadAndAnimIcon(icons[rs[3]], icon4)
-                }
-            }
-        }
-    }
-
-    private fun loadAndAnimIcon(drawable: Int, icon: ImageView){
-
-        icon.visibility = View.INVISIBLE
-
-        Glide.with(this@MainActivity).load(drawable).listener(object : RequestListener<Drawable>{
-            override fun onLoadFailed(
-                e: GlideException?,
-                model: Any?,
-                target: Target<Drawable>?,
-                isFirstResource: Boolean
-            ): Boolean {
-                return false
-            }
-
-            override fun onResourceReady(
-                resource: Drawable?,
-                model: Any?,
-                target: Target<Drawable>?,
-                dataSource: DataSource?,
-                isFirstResource: Boolean
-            ): Boolean {
-                icon.post {
-                    iconAnimator(icon)
-                }
-                return false
-            }
-
-        }).into(icon)
-    }
-
-    private fun iconAnimator(v: View){
-
-        val animator = ValueAnimator()
-        animator.setFloatValues(0f, 1f)
-        animator.interpolator = DecelerateInterpolator()
-        animator.duration = 600
-        animator.addUpdateListener {
-            v.scaleX = it.animatedValue as Float
-            v.scaleY = it.animatedValue as Float
-        }
-        animator.start()
-        v.visibility = View.VISIBLE
-    }
-
-    /**
-     * 获取当前版本appfilter
-     */
-    private fun parser(): String{
-        adaptations.clear()
-        val err = StringBuilder()
-        val sb = StringBuilder()
-        val xml = resources.getXml(R.xml.appfilter)
-        var type = xml.eventType
-        try {
-            while (type != XmlPullParser.END_DOCUMENT){
-                when(type){
-                    XmlPullParser.START_TAG ->{
-                        if (xml.name == "item"){
-                            val pkgActivity = xml.getAttributeValue(0)
-                            val drawable = xml.getAttributeValue(1)
-                            if (pkgActivity.indexOf("{") > 0 && pkgActivity.indexOf("{")+1 < pkgActivity.indexOf("/") && pkgActivity.indexOf("/")+1 < pkgActivity.indexOf("}")){
-                                adaptations.add(AdaptionBean(pkgActivity.substring(pkgActivity.indexOf("{")+1,pkgActivity.indexOf("/")), pkgActivity.substring(pkgActivity.indexOf("/")+1,pkgActivity.indexOf("}")),drawable))
-
-                                sb.append("<item component=\"$pkgActivity\" drawable=\"${drawable}\" />\r\n")
-                            }else{
-                                err.append("在${pkgActivity} 附近处有一处错误\r\n")
-                                Log.e("SeeErr",pkgActivity)
-                            }
-                        }
-                    }
-                    XmlPullParser.TEXT ->{
-
-                    }
-                }
-                type = xml.next()
-            }
-            if (err.isNotEmpty()){
-
-                val msg = Message()
-                msg.what = 3
-                msg.obj = err.toString()
-                mHandler.sendMessage(msg)
-            }
-
-        } catch (e: XmlPullParserException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        return sb.toString()
     }
 
     /**
@@ -915,16 +461,15 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    override fun onDestroy() {
+        Glide.get(this).clearMemory()
+        super.onDestroy()
+    }
+
     override fun onBackPressed() {
-        if (searchBox.visibility == View.VISIBLE){
-            if (searchInput.text.isNotEmpty()){
-                searchInput.setText("")
-            }else{
-                closeKeyboard()
-                search()
-                iconsFragment.reloadIcons()
-            }
-        }else if (pager.currentItem != 0){
+        if (iconsFragment != null && iconsFragment!!.cancelPreview()) {
+
+        } else if (pager.currentItem != 0){
             pager.currentItem = 0
         }else{
             super.onBackPressed()

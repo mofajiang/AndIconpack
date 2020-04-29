@@ -1,7 +1,6 @@
 package org.andcreator.iconpack.fragment
 
 
-import android.content.Context
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.LayoutInflater
@@ -11,7 +10,6 @@ import androidx.fragment.app.DialogFragment
 import kotlinx.android.synthetic.main.fragment_update.*
 
 import org.andcreator.iconpack.R
-import org.andcreator.iconpack.bean.AdaptionBean
 import org.andcreator.iconpack.util.DisplayUtil
 import org.andcreator.iconpack.util.Utils
 

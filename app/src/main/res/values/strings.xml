@@ -18,8 +18,8 @@
     <string name="new_icons">16</string>
 
     <!-- 作者信息 -->
-    <string name="designer_name">And</string>
-    <string name="designer_message">图标包创作者</string>
+    <string name="designer_name">Andrew</string>
+    <string name="designer_message">一名设计摄影爱好者，也是本图标包创作者，希望有更多人喜欢这个作品！</string>
     <string name="mail">hujincan15369@Gmail.com</string>
 
     <!-- 手动解析二维码获得地址中的参数,一定记得先开通商家收款码，例如 https://qr.alipay.com/tsx083367dghotyahi8lq2e 最后那段 -->
@@ -28,9 +28,7 @@
     <!-- 更新了啥？ -->
     <string name="update_content" translatable="false">• 优化APP启动速度\n\n• 更新了很多自动化的功能\n\n• 开发者QQ: 2530767709</string>
 
-
     <!-- 更多信息前往main/java/packageName/AboutFragment.java 修改 -->
-
 
     <string name="no_store">没有可用的应用商店</string>
 
@@ -48,7 +46,7 @@
     <!-- 主页 Tabs -->
     <string name="home">主页</string>
     <string name="icons">图标</string>
-    <string name="icon_adapter">图标适配</string>
+    <string name="icon_adapter">适配</string>
     <string name="apply">应用</string>
     <string name="about">关于</string>
 
@@ -56,8 +54,8 @@
     <string name="not_adapter">未适配&#160;</string>
 
     <string name="developer">仪表盘开发者</string>
-    <string name="adapter_not">未适配0个</string>
-    <string name="adapter_number">适配0个</string>
+    <string name="adapter_not">未适配 0</string>
+    <string name="adapter_number">适配 0</string>
 
     <string name="for_app_star">请为此应用评分</string>
     <string name="feel_good_a">如果觉得很棒，请给它5颗星</string>
@@ -75,7 +73,7 @@
 
     <string name="gnl_title">不兼容谷歌即时桌面</string>
 
-    <string name="transition_icon" translatable="false">transition_icon</string>
+    <string name="transition_icon">transition_icon</string>
 
     <string name="gnl_content">谷歌即时桌面与图标包是不可兼容的，但请不要因此给予这个图标包负面的评价。有一个解决方法你可以尝试，但这需要使用到一个外部应用，你想要下载它吗?
     </string>
@@ -90,4 +88,5 @@
     <string name="cm_dialog_content">%1$s 是CyanogenMod（based） Roms 的一部分，\n你想要将它下载到你的设备上吗？
     </string>
 
+    <string name="title_activity_dev">Dev_Activity</string>
 </resources>

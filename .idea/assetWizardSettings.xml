@@ -51,7 +51,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="scalingPercent" value="76" />
+                                                <entry key="scalingPercent" value="66" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -62,10 +62,8 @@
                                   <option name="values">
                                     <map>
                                       <entry key="backgroundAssetType" value="COLOR" />
-                                      <entry key="backgroundColor" value="ffffff" />
-                                      <entry key="foregroundImage" value="D:\And Design\任务卡片2.0\ic_launcher.png" />
-                                      <entry key="legacyIconShape" value="CIRCLE" />
-                                      <entry key="webIconShape" value="CIRCLE" />
+                                      <entry key="backgroundColor" value="f06292" />
+                                      <entry key="foregroundImage" value="C:\Users\hawvu\Documents\custom – 1.png" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -138,7 +136,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/C:/Program%20Files/Android/Android%20Studio/plugins/android/lib/android.jar!/images/material_design_icons/navigation/ic_chevron_right_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/C:/Program%20Files/Android/Android%20Studio/plugins/android/lib/android.jar!/images/material_design_icons/maps/ic_local_cafe_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -148,9 +146,9 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="color" value="666666" />
-                            <entry key="outputName" value="ic_chevron_right_black_24dp" />
-                            <entry key="sourceFile" value="C:\Users\hawvu" />
+                            <entry key="color" value="ffffff" />
+                            <entry key="outputName" value="ic_local_cafe_white_24dp" />
+                            <entry key="sourceFile" value="C:\Users\hawvu\Documents\coolapk.svg" />
                           </map>
                         </option>
                       </PersistentState>
