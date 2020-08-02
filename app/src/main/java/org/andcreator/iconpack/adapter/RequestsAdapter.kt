@@ -69,12 +69,15 @@ class RequestsAdapter(private val context: Context,
                 }
             }
 
-            if (count < MAX_REQUEST_COUNT) {
+            if (count <= MAX_REQUEST_COUNT) {
 
                 checkRead[p1] = !p0.chkSelected.isChecked
                 p0.chkSelected.isChecked = !p0.chkSelected.isChecked
-                selectListener.onSelected(count)
-                count++
+                if (!checkRead[p1]) {
+                    selectListener.onSelected(--count)
+                } else {
+                    selectListener.onSelected(++count)
+                }
             } else {
                 Toast.makeText(context, "最多被允许选择 $MAX_REQUEST_COUNT 个应用", Toast.LENGTH_SHORT).show()
             }
