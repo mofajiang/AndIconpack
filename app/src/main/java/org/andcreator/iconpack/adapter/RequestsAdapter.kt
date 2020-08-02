@@ -73,6 +73,7 @@ class RequestsAdapter(private val context: Context,
 
                 checkRead[p1] = !p0.chkSelected.isChecked
                 p0.chkSelected.isChecked = !p0.chkSelected.isChecked
+
                 if (!checkRead[p1]) {
                     selectListener.onSelected(--count)
                 } else {
